@@ -69,12 +69,14 @@ bpwatch start compile
 
 # Syntax sugar.
 source $BIN_DIR/utils
+# Buildcurl
+source $BIN_DIR/buildcurl
 
 # Import collection of warnings.
 source $BIN_DIR/warnings
 
 # Directory Hacks for path consistiency.
-APP_DIR='/app'
+APP_DIR=$(dirname /app/.heroku)
 TMP_APP_DIR=$CACHE_DIR/tmp_app_dir
 
 # Skip these steps for Docker.
