@@ -10,6 +10,7 @@
 #   - $DISABLE_COLLECTSTATIC: disables this functionality.
 #   - $DEBUG_COLLECTSTATIC: upon failure, print out environment variables.
 
+# shellcheck source=bin/utils
 source $BIN_DIR/utils
 
 # Location of 'manage.py', if it exists.
@@ -19,24 +20,23 @@ MANAGE_FILE=${MANAGE_FILE:-fakepath}
 # Legacy file-based support for $DISABLE_COLLECTSTATIC
 [ -f .heroku/collectstatic_disabled ] && DISABLE_COLLECTSTATIC=1
 
-# Ensure that Django is explicitily specified in requirments.txt
-pip-grep -s requirements.txt django Django && DJANGO_INSTALLED=1
+# Ensure that Django is explicitly specified in requirements.txt
+sp-grep -s django && DJANGO_INSTALLED=1
 
-bpwatch start collectstatic  # metrics collection
 
 if [ ! "$DISABLE_COLLECTSTATIC" ] && [ -f "$MANAGE_FILE" ] && [ "$DJANGO_INSTALLED" ]; then
     set +e
 
-    puts-cmd "python $MANAGE_FILE collectstatic --noinput"
+    puts-step "$ python $MANAGE_FILE collectstatic --noinput"
 
     # Run collectstatic, cleanup some of the noisy output.
-    python $MANAGE_FILE collectstatic --noinput --traceback 2>&1 | sed '/^Post-processed/d;/^Copying/d;/^$/d' | indent
+    python "$MANAGE_FILE" collectstatic --noinput --traceback 2>&1 | sed '/^Post-processed/d;/^Copying/d;/^$/d' | indent
     COLLECTSTATIC_STATUS="${PIPESTATUS[0]}"
 
     set -e
 
     # Display a warning if collectstatic failed.
-    [ $COLLECTSTATIC_STATUS -ne 0 ] && {
+    [ "$COLLECTSTATIC_STATUS" -ne 0 ] && {
 
         echo
         echo " !     Error while running '$ python $MANAGE_FILE collectstatic --noinput'."
@@ -47,7 +47,7 @@ if [ ! "$DISABLE_COLLECTSTATIC" ] && [ -f "$MANAGE_FILE" ] && [ "$DJANGO_INSTALL
         echo
         echo "          $ heroku config:set DISABLE_COLLECTSTATIC=1"
         echo
-        echo "       http://devcenter.heroku.com/articles/django-assets"
+        echo "       https://devcenter.heroku.com/articles/django-assets"
 
         # Additionally, dump out the environment, if debug mode is on.
         if [ "$DEBUG_COLLECTSTATIC" ]; then
@@ -63,5 +63,3 @@ if [ ! "$DISABLE_COLLECTSTATIC" ] && [ -f "$MANAGE_FILE" ] && [ "$DJANGO_INSTALL
 
     echo
 fi
-
-bpwatch stop collectstatic  # metrics collection
